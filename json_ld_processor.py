@@ -19,7 +19,7 @@ __author__ = 'Bradley P. Allen'
 __email__ = "bradley.p.allen@gmail.com"
 __credits__ = "Thanks to Manu Sporny and Mark Birbeck for drafting the JSON-LD specification."
 
-import re, uuid, json, urlparse
+import re, uuid, json, urllib.parse as urlparse
 
 class Processor(object):
     '''
@@ -149,12 +149,12 @@ class Processor(object):
             #
             # Merge contexts if necessary
             #
-            if item.has_key("#"): # if it has a local context
+            if "#" in item: # if it has a local context
                 context = self.__merge_contexts(item["#"], context) # merge it into context
             #
             # Determine the subject
             #
-            if item.has_key("@"): # if item has a reference to a resource
+            if "@" in item: # if item has a reference to a resource
                 subj = item["@"]  # set subj to the reference
                 if type(subj).__name__ == 'dict': # if subj is an object
                     for t in self.__triples(subj, context): # recurse
@@ -231,9 +231,9 @@ class Processor(object):
         http://json-ld.org/spec/latest/. 
         '''
         context = {}
-        for prefix in active_context.keys():
+        for prefix in list(active_context.keys()):
             context[prefix] = active_context[prefix]
-        for prefix in local_context.keys():
+        for prefix in list(local_context.keys()):
             context[prefix] = local_context[prefix]
         return context
 
@@ -248,16 +248,16 @@ class Processor(object):
                 return key.strip('<>') # then assume it is an IRI, strip the angle brackets and return it
             elif m.group(3) == '/': # looks like an irrelative-ref as defined in [2], not wrapped in angle brackets
                 return key # so assume it's already an IRI
-            elif context.has_key(m.group(2)): # otherwise, since we have a binding for the prefix
+            elif m.group(2) in context: # otherwise, since we have a binding for the prefix
                 return context[m.group(2)] + m.group(5) # we append the key to the prefix IRI
             elif m.group(2) == '_': # otherwise if this is a blank node
                 return key # we return it directly
             else: # otherwise we have prefix that is not in the context
                 raise Exception('The current context is missing a match for "%s" in "%s"' % (m.group(2), key))
         else: # otherwise this must be a key or a relative IRI
-            if context.has_key(key): # if context contains key as a key
+            if key in context: # if context contains key as a key
                 return context[key] # return the key value IRI
-            elif context.has_key("#vocab"): # otherwise if we have a #vocab IRI
+            elif "#vocab" in context: # otherwise if we have a #vocab IRI
                 return context["#vocab"] + key # we append the key to the #vocab IRI
             else: # otherwise we complain
                 raise Exception("The current context is missing a #vocab prefix")
@@ -266,7 +266,7 @@ class Processor(object):
         '''
         Returns an object value of a triple, given a JSON-LD object key value.
         '''
-        if type(obj).__name__ in ['str', 'unicode'] and (context.has_key(obj) or self.__bnode_pattern.match(obj) or self.__curie_pattern.match(obj) or self.__wrapped_absolute_iri_pattern.match(obj) or self.__wrapped_relative_iri_pattern.match(obj)):
+        if type(obj).__name__ in ['str', 'unicode'] and (obj in context or self.__bnode_pattern.match(obj) or self.__curie_pattern.match(obj) or self.__wrapped_absolute_iri_pattern.match(obj) or self.__wrapped_relative_iri_pattern.match(obj)):
             return self.__resource_valued_triple(subj, prop, obj, context)
         else:
             return self.__literal_valued_triple(subj, prop, obj, context)
@@ -285,25 +285,25 @@ class Processor(object):
         wrapped_relative_iri = self.__wrapped_relative_iri_pattern.match(value)
         curie = self.__curie_pattern.match(value)
         bnode = self.__bnode_pattern.match(value)
-        if context.has_key(value):
+        if value in context:
             return context[value]
         elif bnode:
             return value
         elif curie:
-            if context.has_key(curie.group('prefix')):
+            if curie.group('prefix') in context:
                 return context[curie.group('prefix')] + curie.group('reference')
-            elif context.has_key(curie.group('reference')):
+            elif curie.group('reference') in context:
                 return context[curie.group('reference')]
             else:
                 raise Exception('The current context is missing a match for "%s" or "%s" in "%s"' % (curie.group('prefix'), curie.group('reference'), value))
         elif wrapped_absolute_iri:
-            if context.has_key('#base'):
+            if '#base' in context:
                 base = context['#base']
             else:
                 base = ''
             return urlparse.urljoin(base, wrapped_absolute_iri.group('iri'))
         elif wrapped_relative_iri:
-            if context.has_key('#base'):
+            if '#base' in context:
                 return urlparse.urljoin(context['#base'], wrapped_relative_iri.group('iri'))
             else:
                 raise Exception("The current context is missing a #base prefix")
@@ -317,9 +317,9 @@ class Processor(object):
         absolute_iri = self.__absolute_iri_pattern.match(value)
         curie = self.__curie_pattern.match(value)
         if curie:
-            if context.has_key(curie.group('prefix')):
+            if curie.group('prefix') in context:
                 return context[curie.group('prefix')] + curie.group('reference')
-            elif context.has_key(curie.group('reference')):
+            elif curie.group('reference') in context:
                 return context[curie.group('reference')]
             else:
                 raise Exception('The current context is missing a match for "%s" or "%s" in "%s"' % (curie.group('prefix'), curie.group('reference'), value))
