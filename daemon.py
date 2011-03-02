@@ -24,10 +24,14 @@ def main(addr):
     socket = context.socket(zmq.REP)
 
     socket.bind(addr)
+    processor = jlp.Processor()
 
     while True:
         msg = socket.recv()
-        print("%s" % (msg))
+
+        while triple = jlp.triples(msg):
+            print('triple: objtype: %s, obj: %s' % (triple.objtype, triple.obj))
+
         socket.send(b'hey!')
 
 if __name__ == '__main__':
