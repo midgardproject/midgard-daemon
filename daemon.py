@@ -1,38 +1,49 @@
 import json_ld_processor as jlp
+
 import zmq
+from zmq.eventloop import ioloop
+from zmq.eventloop.zmqstream import ZMQStream
+
 import pygtk
 import gi
-
 from gi.repository import Midgard
 
-def init():
-    Midgard.init()
+class MidgardDaemon:
+    def __init__(self, addr):
+        Midgard.init()
 
-    config = Midgard.Config()
-    config.props.dbtype = "SQLite"
-    config.set_property ("database", "testdb")
-    config.set_property ("loglevel", "warn")
+        config = Midgard.Config()
+        config.props.dbtype = "SQLite"
+        config.set_property ("database", "testdb")
+        config.set_property ("loglevel", "warn")
 
-    mgd = Midgard.Connection()
-    mgd.open_config (config)
+        mgd = Midgard.Connection()
+        mgd.open_config (config)
 
-    storage = Midgard.Storage()
-    storage.create_base_storage(mgd)
+        storage = Midgard.Storage()
+        storage.create_base_storage(mgd)
 
-def main(addr):
-    context = zmq.Context()
-    socket = context.socket(zmq.REP)
+        context = zmq.Context()
+        socket = context.socket(zmq.REP)
 
-    socket.bind(addr)
-    processor = jlp.Processor()
+        socket.bind(addr)
 
-    while True:
-        msg = str(socket.recv(), 'utf8')
+        self.loop = ioloop.IOLoop.instance()
 
+        self.stream = ZMQStream(socket, self.loop)
+        self.stream.on_recv(self.handler)
+
+    def handler(self, message):
+        msg = str(message[0], 'utf8')
+
+        processor = jlp.Processor()
         for triple in processor.triples(msg):
             print('triple: objtype: %s, obj: %s' % (triple['objtype'], triple['obj']))
 
-        socket.send(b'hey!')
+        self.stream.send(b'hey!')
+
+    def run(self):
+        self.loop.start()
 
 if __name__ == '__main__':
     import sys
@@ -41,5 +52,5 @@ if __name__ == '__main__':
         print("usage: daemon.py <address>")
         raise SystemExit
 
-    init()
-    main(sys.argv[1])
+    daemon = MidgardDaemon(sys.argv[1])
+    daemon.run()
