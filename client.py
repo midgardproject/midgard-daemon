@@ -6,7 +6,7 @@ def main(addr, who):
     socket.connect(addr)
 
     while True:
-        msg = input("%s> " % who)
+        msg = bytes(input("%s> " % who), 'utf8')
         socket.send(msg)
         resp = socket.recv()
         print("got: %s\n" % (resp))

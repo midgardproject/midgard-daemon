@@ -28,7 +28,7 @@ def main(addr):
     while True:
         msg = socket.recv()
         print("%s" % (msg))
-        socket.send('hey!')
+        socket.send(b'hey!')
 
 if __name__ == '__main__':
     import sys
