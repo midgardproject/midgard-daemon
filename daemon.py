@@ -27,10 +27,10 @@ def main(addr):
     processor = jlp.Processor()
 
     while True:
-        msg = socket.recv()
+        msg = str(socket.recv(), 'utf8')
 
-        while triple = jlp.triples(msg):
-            print('triple: objtype: %s, obj: %s' % (triple.objtype, triple.obj))
+        for triple in processor.triples(msg):
+            print('triple: objtype: %s, obj: %s' % (triple['objtype'], triple['obj']))
 
         socket.send(b'hey!')
 
