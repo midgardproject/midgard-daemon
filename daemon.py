@@ -1,3 +1,4 @@
+import json
 import json_ld_processor as jlp
 
 import zmq
@@ -17,11 +18,11 @@ class MidgardDaemon:
         config.set_property ("database", "testdb")
         config.set_property ("loglevel", "warn")
 
-        mgd = Midgard.Connection()
-        mgd.open_config (config)
+        self.mgd = Midgard.Connection()
+        self.mgd.open_config (config)
 
         storage = Midgard.Storage()
-        storage.create_base_storage(mgd)
+        storage.create_base_storage(self.mgd)
 
         context = zmq.Context()
         socket = context.socket(zmq.REP)
@@ -36,11 +37,41 @@ class MidgardDaemon:
     def handler(self, message):
         msg = str(message[0], 'utf8')
 
-        processor = jlp.Processor()
-        for triple in processor.triples(msg):
-            print('triple: objtype: %s, obj: %s' % (triple['objtype'], triple['obj']))
+        data = json.loads(msg)
+        if 'query' in data:
+            response = self.handleQuery(data['query'])
 
-        self.stream.send(b'hey!')
+        self.stream.send(bytes(response, 'utf8'))
+
+    def handleQuery(self, fields):
+        if 'a' not in fields:
+            raise Exception("Don't know what to return")
+
+        mgd_type_name = self.decodeType(fields['a'])
+
+        if 'constraints' in fields:
+            """add constraints"""
+            pass
+
+        if 'order' in fields:
+            """add order"""
+            pass
+
+        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
+        sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
+        sel.execute()
+
+        objects = [obj.get_property('guid') for obj in sel.list_objects()]
+        return json.dumps(objects)
+
+    def decodeType(self, rdfName):
+        """convert RDF-name of type to Midgard-name of type"""
+        ns_name, _, class_name = rdfName.rpartition(':')
+
+        if ns_name != 'mgd':
+            raise Exception('"%s" namespace is not supported' % (ns_name))
+
+        return class_name
 
     def run(self):
         self.loop.start()
