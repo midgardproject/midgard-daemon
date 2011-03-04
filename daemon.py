@@ -61,7 +61,7 @@ class MidgardDaemon:
         sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
         sel.execute()
 
-        objects = [obj.get_property('guid') for obj in sel.list_objects()]
+        objects = [self.encodeObj(obj) for obj in sel.list_objects()]
         return json.dumps(objects)
 
     def decodeType(self, rdfName):
@@ -72,6 +72,21 @@ class MidgardDaemon:
             raise Exception('"%s" namespace is not supported' % (ns_name))
 
         return class_name
+
+    def encodeObj(self, obj):
+        retVal = {
+            '#': {'mgd': 'http://www.midgard-project.org/midgard2/10.05'},
+            'a': 'mgd:%s' % (obj.__class__.__name__.rpartition('.')[2]),
+        }
+
+        names = [pspec.name for pspec in obj.props if not pspec.value_type.is_classed()]
+        for name in names:
+            if name == 'guid':
+                retVal['@'] = '<urn:uuid:%s>' % (obj.props.guid)
+            else:
+                retVal['mgd:' + name] = obj.get_property(name)
+
+        return retVal
 
     def run(self):
         self.loop.start()
