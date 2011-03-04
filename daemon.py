@@ -47,7 +47,7 @@ class MidgardDaemon:
         if 'a' not in fields:
             raise Exception("Don't know what to return")
 
-        mgd_type_name = self.decodeType(fields['a'])
+        mgd_type_name = self.decodeRdfName(fields['a'])
 
         if 'constraints' in fields:
             """add constraints"""
@@ -64,14 +64,16 @@ class MidgardDaemon:
         objects = [self.encodeObj(obj) for obj in sel.list_objects()]
         return json.dumps(objects)
 
-    def decodeType(self, rdfName):
-        """convert RDF-name of type to Midgard-name of type"""
+    def decodeRdfName(self, rdfName):
+        """convert RDF-name of type/field to Midgard-name of type/field"""
         ns_name, _, class_name = rdfName.rpartition(':')
 
         if ns_name != 'mgd':
             raise Exception('"%s" namespace is not supported' % (ns_name))
 
-        return class_name
+        midgard_name = class_name
+
+        return midgard_name
 
     def encodeObj(self, obj):
         retVal = {
