@@ -49,20 +49,43 @@ class MidgardDaemon:
 
         mgd_type_name = self.decodeRdfName(fields['a'])
 
-        if 'constraints' in fields:
-            """add constraints"""
-            pass
+        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
+        sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
+
+        if 'constraints' in fields and len(fields['constraints']) > 0:
+            # this should be simplified, by using only "else" part, as soon as
+            # core can handle that
+            if len(fields['constraints']) == 1:
+                constraint_dict = fields['constraints'][0]
+                constraint = self.decodeConstraint(constraint_dict)
+                sel.set_constraint(constraint)
+            else:
+                constr_group = Midgard.QueryConstraintGroup(grouptype="AND")
+                for constraint_dict in fields['constraints']:
+                    constraint = self.decodeConstraint(constraint_dict)
+                    constr_group.add_constraint(constraint)
+                sel.set_constraint(constr_group)
 
         if 'order' in fields:
             """add order"""
             pass
 
-        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
-        sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
         sel.execute()
 
         objects = [self.encodeObj(obj) for obj in sel.list_objects()]
         return json.dumps(objects)
+
+    def decodeConstraint(self, constraint_dict):
+        value = Midgard.QueryValue()
+        value.set_value(constraint_dict[2])
+
+        property = Midgard.QueryProperty(property = self.decodeRdfName(constraint_dict[0]))
+        constraint = Midgard.QueryConstraint(property = property,
+                                             operator = constraint_dict[1],
+                                             holder = value
+        )
+
+        return constraint
 
     def decodeRdfName(self, rdfName):
         """convert RDF-name of type/field to Midgard-name of type/field"""
