@@ -77,7 +77,7 @@ class MidgardDaemon:
 
     def encodeObj(self, obj):
         retVal = {
-            '#': {'mgd': 'http://www.midgard-project.org/midgard2/10.05'},
+            '#': {'mgd': 'http://www.midgard-project.org/midgard2/10.05/'},
             'a': 'mgd:%s' % (obj.__class__.__name__.rpartition('.')[2]),
         }
 
