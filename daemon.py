@@ -71,8 +71,11 @@ class MidgardDaemon:
                 sel.set_constraint(constr_group)
 
         if 'order' in fields:
-            """add order"""
-            pass
+            for order in fields['order']:
+                # in practice there will be only one element here
+                for key, direction in order.items():
+                    qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
+                    sel.add_order(qprop, direction)
 
         sel.execute()
 
