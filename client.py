@@ -6,10 +6,14 @@ def main(addr):
     socket.connect(addr)
 
     while True:
-        msg = bytes(input("enter message> "), 'utf8')
-        socket.send(msg)
-        resp = socket.recv()
-        print("got: %s\n" % (resp))
+        try:
+            msg = bytes(input("enter message> "), 'utf8')
+            socket.send(msg)
+            resp = socket.recv()
+            print("\ngot: %s\n" % (resp))
+        except EOFError:
+            print("") #new line
+            break
 
 if __name__ == '__main__':
     import sys
