@@ -37,9 +37,13 @@ class MidgardDaemon:
     def handler(self, message):
         msg = str(message[0], 'utf8')
 
-        data = json.loads(msg)
-        if 'query' in data:
-            response = self.handleQuery(data['query'])
+        try:
+            data = json.loads(msg)
+            if 'query' in data:
+                response = self.handleQuery(data['query'])
+        except (TypeError, ValueError) as e:
+            resp_obj = {"status": {"code": -128, "error": "Invalid request. %s" % (e) }}
+            response = json.dumps(resp_obj)
 
         self.stream.send(bytes(response, 'utf8'))
 
