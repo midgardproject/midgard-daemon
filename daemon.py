@@ -48,7 +48,7 @@ class MidgardDaemon:
 
     def handleQuery(self, fields):
         if 'a' not in fields:
-            raise Exception("Don't know what to return")
+            raise ValueError("Don't know what to return")
 
         mgd_type_name = self.decodeRdfName(fields['a'])
 
