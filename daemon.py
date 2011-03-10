@@ -10,17 +10,15 @@ import gobject
 import gi
 from gi.repository import Midgard
 
+# local imports
+import DaemonConfig
+
 class MidgardDaemon:
     def __init__(self, addr):
         Midgard.init()
 
-        config = Midgard.Config()
-        config.props.dbtype = "SQLite"
-        config.set_property ("database", "testdb")
-        config.set_property ("loglevel", "warn")
-
         self.mgd = Midgard.Connection()
-        self.mgd.open_config (config)
+        self.mgd.open_config(DaemonConfig())
 
         storage = Midgard.Storage()
         storage.create_base_storage(self.mgd)
