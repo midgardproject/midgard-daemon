@@ -6,6 +6,7 @@ from zmq.eventloop import ioloop
 from zmq.eventloop.zmqstream import ZMQStream
 
 import pygtk
+import gobject
 import gi
 from gi.repository import Midgard
 
@@ -53,31 +54,34 @@ class MidgardDaemon:
 
         mgd_type_name = self.decodeRdfName(fields['a'])
 
-        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
-        sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
+        try:
+            qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
+            sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
 
-        if 'constraints' in fields and len(fields['constraints']) > 0:
-            # this should be simplified, by using only "else" part, as soon as
-            # core can handle that
-            if len(fields['constraints']) == 1:
-                constraint_dict = fields['constraints'][0]
-                constraint = self.decodeConstraint(constraint_dict)
-                sel.set_constraint(constraint)
-            else:
-                constr_group = Midgard.QueryConstraintGroup(grouptype="AND")
-                for constraint_dict in fields['constraints']:
+            if 'constraints' in fields and len(fields['constraints']) > 0:
+                # this should be simplified, by using only "else" part, as soon as
+                # core can handle that
+                if len(fields['constraints']) == 1:
+                    constraint_dict = fields['constraints'][0]
                     constraint = self.decodeConstraint(constraint_dict)
-                    constr_group.add_constraint(constraint)
-                sel.set_constraint(constr_group)
+                    sel.set_constraint(constraint)
+                else:
+                    constr_group = Midgard.QueryConstraintGroup(grouptype="AND")
+                    for constraint_dict in fields['constraints']:
+                        constraint = self.decodeConstraint(constraint_dict)
+                        constr_group.add_constraint(constraint)
+                    sel.set_constraint(constr_group)
 
-        if 'order' in fields:
-            for order in fields['order']:
-                # in practice there will be only one element here
-                for key, direction in order.items():
-                    qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
-                    sel.add_order(qprop, direction)
+            if 'order' in fields:
+                for order in fields['order']:
+                    # in practice there will be only one element here
+                    for key, direction in order.items():
+                        qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
+                        sel.add_order(qprop, direction)
 
-        sel.execute()
+            sel.execute()
+        except gobject.GError as e:
+            return json.dumps({"status": {"code": e.code, "error": "Invalid request. %s" % (e.message)}})
 
         objects = [self.encodeObj(obj) for obj in sel.list_objects()]
         return json.dumps(objects)
