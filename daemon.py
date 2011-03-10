@@ -80,6 +80,8 @@ class MidgardDaemon:
                     # in practice there will be only one element here
                     for key, direction in order.items():
                         qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
+                        qprop.validate()
+
                         sel.add_order(qprop, direction)
 
             sel.execute()
