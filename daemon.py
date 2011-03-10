@@ -5,9 +5,7 @@ import zmq
 from zmq.eventloop import ioloop
 from zmq.eventloop.zmqstream import ZMQStream
 
-import pygtk
 import gobject
-import gi
 from gi.repository import Midgard
 
 # local imports

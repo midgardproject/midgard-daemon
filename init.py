@@ -1,6 +1,3 @@
-import inspect
-
-import gi
 from gi.repository import Midgard
 from DaemonConfig import DaemonConfig
 

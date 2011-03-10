@@ -1,5 +1,4 @@
 import os
-import pygtk
 from gi.repository import Midgard
 
 class DaemonConfig(Midgard.Config):
