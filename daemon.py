@@ -56,7 +56,10 @@ class MidgardDaemon:
 
         try:
             qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
+            qstor.validate()
+
             sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
+            sel.validate()
 
             if 'constraints' in fields and len(fields['constraints']) > 0:
                 # this should be simplified, by using only "else" part, as soon as
@@ -91,10 +94,13 @@ class MidgardDaemon:
         value.set_value(constraint_dict[2])
 
         property = Midgard.QueryProperty(property = self.decodeRdfName(constraint_dict[0]))
+        property.validate()
+
         constraint = Midgard.QueryConstraint(property = property,
                                              operator = constraint_dict[1],
                                              holder = value
         )
+        constraint.validate()
 
         return constraint
 
