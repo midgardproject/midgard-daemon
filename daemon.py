@@ -13,23 +13,25 @@ from DaemonConfig import DaemonConfig
 
 class MidgardDaemon:
     def __init__(self, addr):
-        Midgard.init()
+        self.init_midgard()
+        self.init_zmq(addr)
 
+    def init_midgard(self):
+        Midgard.init()
         self.mgd = Midgard.Connection()
         self.mgd.open_config(DaemonConfig())
 
-        storage = Midgard.Storage()
-        storage.create_base_storage(self.mgd)
-
+    def init_zmq(self, addr):
         context = zmq.Context()
-        socket = context.socket(zmq.REP)
 
+        socket = context.socket(zmq.REP)
         socket.bind(addr)
 
         self.loop = ioloop.IOLoop.instance()
 
         self.stream = ZMQStream(socket, self.loop)
         self.stream.on_recv(self.handler)
+
 
     def handler(self, message):
         msg = str(message[0], 'utf8')
