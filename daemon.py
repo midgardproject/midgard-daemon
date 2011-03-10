@@ -43,6 +43,9 @@ class MidgardDaemon:
         except (TypeError, ValueError) as e:
             resp_obj = {"status": {"code": -128, "error": "Invalid request. %s" % (e) }}
             response = json.dumps(resp_obj)
+        except gobject.GError as e:
+            resp_obj = {"status": {"code": e.code, "error": "Invalid request. %s" % (e.message)}}
+            response = json.dumps(resp_obj)
 
         self.stream.send(bytes(response, 'utf8'))
 
@@ -52,28 +55,25 @@ class MidgardDaemon:
 
         mgd_type_name = self.decodeRdfName(fields['a'])
 
-        try:
-            qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
-            qstor.validate()
+        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
+        qstor.validate()
 
-            sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
-            sel.validate()
+        sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
+        sel.validate()
 
-            if 'constraints' in fields and len(fields['constraints']) > 0:
-                constraint = self.decodeConstraints(fields['constraints'])
-                sel.set_constraint(constraint)
+        if 'constraints' in fields and len(fields['constraints']) > 0:
+            constraint = self.decodeConstraints(fields['constraints'])
+            sel.set_constraint(constraint)
 
-            if 'order' in fields:
-                for order in fields['order']:
-                    for key, direction in order.items():
-                        qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
-                        qprop.validate()
+        if 'order' in fields:
+            for order in fields['order']:
+                for key, direction in order.items():
+                    qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
+                    qprop.validate()
 
-                        sel.add_order(qprop, direction)
+                    sel.add_order(qprop, direction)
 
-            sel.execute()
-        except gobject.GError as e:
-            return json.dumps({"status": {"code": e.code, "error": "Invalid request. %s" % (e.message)}})
+        sel.execute()
 
         objects = [self.encodeObj(obj) for obj in sel.list_objects()]
         return json.dumps(objects)
