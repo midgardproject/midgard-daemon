@@ -11,7 +11,7 @@ import gi
 from gi.repository import Midgard
 
 # local imports
-import DaemonConfig
+from DaemonConfig import DaemonConfig
 
 class MidgardDaemon:
     def __init__(self, addr):
