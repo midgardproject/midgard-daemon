@@ -63,14 +63,15 @@ class MidgardDaemon:
 
             if 'constraints' in fields and len(fields['constraints']) > 0:
                 constraint = self.decodeConstraints(fields['constraints'])
-                sel.set_constraint(constr_group)
+                sel.set_constraint(constraint)
 
             if 'order' in fields:
-                for key, direction in [order.items() for order in fields['order']]:
-                    qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
-                    qprop.validate()
+                for order in fields['order']:
+                    for key, direction in order.items():
+                        qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
+                        qprop.validate()
 
-                    sel.add_order(qprop, direction)
+                        sel.add_order(qprop, direction)
 
             sel.execute()
         except gobject.GError as e:
