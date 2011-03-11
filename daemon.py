@@ -129,9 +129,11 @@ class MidgardDaemon:
         return midgard_name
 
     def encodeObj(self, obj):
+        classname = obj.__class__.__gtype__.name
+
         retVal = {
             '#': {'mgd': 'http://www.midgard-project.org/midgard2/10.05/'},
-            'a': self.encodeClassname(obj.__class__.__gtype__.name),
+            'a': self.encodeClassname(classname),
         }
 
         names = [pspec.name for pspec in obj.props if not pspec.value_type.is_classed()]
@@ -139,7 +141,8 @@ class MidgardDaemon:
             if name == 'guid':
                 retVal['@'] = '<urn:uuid:%s>' % (obj.props.guid)
             else:
-                retVal['mgd:' + name] = obj.get_property(name)
+                fieldname = self.encodeFieldname(classname, name)
+                retVal[fieldname] = obj.get_property(name)
 
         return retVal
 
@@ -148,6 +151,13 @@ class MidgardDaemon:
             return self.rm.classes_to_rdf[classname]
 
         return 'mgd:' + classname
+
+    def encodeFieldname(self, classname, fieldname):
+        if classname in self.rm.fields_to_rdf:
+            if fieldname in self.rm.fields_to_rdf[classname]:
+                return self.rm.fields_to_rdf[classname][fieldname]
+
+        return 'mgd:' + fieldname
 
     def run(self):
         print("\nwaiting for requests...")
