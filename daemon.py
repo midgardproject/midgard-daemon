@@ -131,7 +131,7 @@ class MidgardDaemon:
     def encodeObj(self, obj):
         retVal = {
             '#': {'mgd': 'http://www.midgard-project.org/midgard2/10.05/'},
-            'a': 'mgd:%s' % (obj.__class__.__name__.rpartition('.')[2]),
+            'a': self.encodeClassname(obj.__class__.__gtype__.name),
         }
 
         names = [pspec.name for pspec in obj.props if not pspec.value_type.is_classed()]
@@ -142,6 +142,12 @@ class MidgardDaemon:
                 retVal['mgd:' + name] = obj.get_property(name)
 
         return retVal
+
+    def encodeClassname(self, classname):
+        if classname in self.rm.classes_to_rdf:
+            return self.rm.classes_to_rdf[classname]
+
+        return 'mgd:' + classname
 
     def run(self):
         print("\nwaiting for requests...")
