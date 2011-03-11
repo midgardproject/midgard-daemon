@@ -1,5 +1,6 @@
 from gi.repository import Midgard
 import json
+import re
 
 class Handler:
     MGD_NAMESPACE = 'http://www.midgard-project.org/midgard2/10.05/'
@@ -136,3 +137,44 @@ class QueryHandler (Handler):
         constraint.validate()
 
         return constraint
+
+def UpdateHandler (Handler):
+    def __init__(self, mgd, rm, input):
+        if 'a' not in input:
+            raise ValueError("Type is not specified")
+
+        if '@' not in input:
+            raise ValueError('UUID not specified')
+
+        Handler.__init__(self, mgd, rm, input)
+
+        if '#' in self.input:
+            self.rdf_map = self.input['#']
+        else:
+            self.rdf_map = {}
+
+        full_name = Handler.canonicalRdfName(self.rdf_map, self.input['a'])
+        self.mgd_type_name = self.decodeRdfClass(full_name)
+        self.guid = self.decodeGuid(seld.input['@'])
+
+    def decodeGuid(self, urn):
+        m = re.search('<urn:uuid:(.*)>', urn)
+        return m.group(1)
+
+    def handle(self):
+        obj = Midgard.Object.new(self.mgd, self.mgd_type_name, self.guid)
+
+        if None == obj:
+            raise ValueError("Object not found")
+
+        for k,v in self.input.items():
+            if k in ['#', '@', 'a']:
+                continue
+
+            obj.set_property(k, v)
+
+        if obj.update():
+            resp_obj = {"status": {"code": 0, "error": "MGD_ERR_OK" }}
+            return json.dumps(resp_obj)
+
+        raise ValueError("Update failed. %s" % (self.mgd.get_error_string()))

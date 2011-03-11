@@ -11,7 +11,8 @@ import json
 #import json_ld_processor as jlp
 from DaemonConfig import DaemonConfig
 from RdfMapper import RdfMapper
-from handlers import QueryHandler
+
+from handlers import QueryHandler, UpdateHandler
 
 class MidgardDaemon:
     def __init__(self, addr):
@@ -52,6 +53,8 @@ class MidgardDaemon:
             data = json.loads(msg)
             if 'query' in data:
                 response = self.handleQuery(data['query'])
+            else if 'update' in data:
+                response = self.handleUpdate(data['update'])
         except (TypeError, ValueError) as e:
             resp_obj = {"status": {"code": -128, "error": "Invalid request. %s" % (e) }}
             response = json.dumps(resp_obj)
@@ -62,8 +65,12 @@ class MidgardDaemon:
         self.stream.send(bytes(response, 'utf8'))
 
     def handleQuery(self, fields):
-        q = QueryHandler(self.mgd, self.rm, fields)
-        return q.handle()
+        handler = QueryHandler(self.mgd, self.rm, fields)
+        return handler.handle()
+
+    def handleUpdate(self, fields):
+        handler = UpdateHandler(self.mgd, self.rm, fields)
+        return handler.handle()
 
     def run(self):
         print("\nwaiting for requests...")
