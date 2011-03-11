@@ -138,7 +138,7 @@ class QueryHandler (Handler):
 
         return constraint
 
-def UpdateHandler (Handler):
+class UpdateHandler (Handler):
     def __init__(self, mgd, rm, input):
         if 'a' not in input:
             raise ValueError("Type is not specified")
@@ -155,7 +155,7 @@ def UpdateHandler (Handler):
 
         full_name = Handler.canonicalRdfName(self.rdf_map, self.input['a'])
         self.mgd_type_name = self.decodeRdfClass(full_name)
-        self.guid = self.decodeGuid(seld.input['@'])
+        self.guid = self.decodeGuid(self.input['@'])
 
     def decodeGuid(self, urn):
         m = re.search('<urn:uuid:(.*)>', urn)

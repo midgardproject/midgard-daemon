@@ -53,7 +53,7 @@ class MidgardDaemon:
             data = json.loads(msg)
             if 'query' in data:
                 response = self.handleQuery(data['query'])
-            else if 'update' in data:
+            elif 'update' in data:
                 response = self.handleUpdate(data['update'])
         except (TypeError, ValueError) as e:
             resp_obj = {"status": {"code": -128, "error": "Invalid request. %s" % (e) }}
