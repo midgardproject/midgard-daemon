@@ -15,15 +15,23 @@ from RdfMapper import RdfMapper
 class MidgardDaemon:
     def __init__(self, addr):
         self.init_midgard()
+        self.init_rdf_mapper()
         self.init_zmq(addr)
-        rm = RdfMapper(self.mgd)
 
     def init_midgard(self):
+        print("Connecting to midgard")
         Midgard.init()
         self.mgd = Midgard.Connection()
         self.mgd.open_config(DaemonConfig())
+        print("... DONE")
+
+    def init_rdf_mapper(self):
+        print("Parsing RDF mapping info")
+        self.rm = RdfMapper(self.mgd)
+        print("... DONE")
 
     def init_zmq(self, addr):
+        print("starting 0MQ thread")
         context = zmq.Context()
 
         socket = context.socket(zmq.REP)
@@ -33,6 +41,7 @@ class MidgardDaemon:
 
         self.stream = ZMQStream(socket, self.loop)
         self.stream.on_recv(self.handler)
+        print("DONE")
 
 
     def handler(self, message):
