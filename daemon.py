@@ -10,11 +10,13 @@ from gi.repository import Midgard
 
 # local imports
 from DaemonConfig import DaemonConfig
+from RdfMapper import RdfMapper
 
 class MidgardDaemon:
     def __init__(self, addr):
         self.init_midgard()
         self.init_zmq(addr)
+        rm = RdfMapper(self.mgd)
 
     def init_midgard(self):
         Midgard.init()
