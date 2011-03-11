@@ -1,6 +1,3 @@
-import json
-import json_ld_processor as jlp
-
 import zmq
 from zmq.eventloop import ioloop
 from zmq.eventloop.zmqstream import ZMQStream
@@ -8,9 +5,13 @@ from zmq.eventloop.zmqstream import ZMQStream
 import gobject
 from gi.repository import Midgard
 
+import json
+
 # local imports
+#import json_ld_processor as jlp
 from DaemonConfig import DaemonConfig
 from RdfMapper import RdfMapper
+from handlers import QueryHandler
 
 class MidgardDaemon:
     def __init__(self, addr):
@@ -61,103 +62,8 @@ class MidgardDaemon:
         self.stream.send(bytes(response, 'utf8'))
 
     def handleQuery(self, fields):
-        if 'a' not in fields:
-            raise ValueError("Don't know what to return")
-
-        mgd_type_name = self.decodeRdfName(fields['a'])
-
-        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
-        qstor.validate()
-
-        sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
-        sel.validate()
-
-        if 'constraints' in fields and len(fields['constraints']) > 0:
-            constraint = self.decodeConstraints(fields['constraints'])
-            sel.set_constraint(constraint)
-
-        if 'order' in fields:
-            for order in fields['order']:
-                for key, direction in order.items():
-                    qprop = Midgard.QueryProperty(property = self.decodeRdfName(key))
-                    qprop.validate()
-
-                    sel.add_order(qprop, direction)
-
-        sel.execute()
-
-        objects = [self.encodeObj(obj) for obj in sel.list_objects()]
-        return json.dumps(objects)
-
-    def decodeConstraints(self, constraints_list):
-        # this should be simplified, by using only "else" part, as soon as
-        # core can handle that
-        if len(constraints_list) == 1:
-            constraint_dict = constraints_list[0]
-            return self.decodeConstraint(constraint_dict)
-        else:
-            constr_group = Midgard.QueryConstraintGroup(grouptype="AND")
-            for constraint_dict in constraints_list:
-                constraint = self.decodeConstraint(constraint_dict)
-                constr_group.add_constraint(constraint)
-            return constr_group
-
-    def decodeConstraint(self, constraint_dict):
-        value = Midgard.QueryValue()
-        value.set_value(constraint_dict[2])
-
-        property = Midgard.QueryProperty(property = self.decodeRdfName(constraint_dict[0]))
-        property.validate()
-
-        constraint = Midgard.QueryConstraint(property = property,
-                                             operator = constraint_dict[1],
-                                             holder = value
-        )
-        constraint.validate()
-
-        return constraint
-
-    def decodeRdfName(self, rdfName):
-        """convert RDF-name of type/field to Midgard-name of type/field"""
-        ns_name, _, class_name = rdfName.rpartition(':')
-
-        if ns_name != 'mgd':
-            raise Exception('"%s" namespace is not supported' % (ns_name))
-
-        midgard_name = class_name
-
-        return midgard_name
-
-    def encodeObj(self, obj):
-        classname = obj.__class__.__gtype__.name
-
-        retVal = {
-            '#': {'mgd': 'http://www.midgard-project.org/midgard2/10.05/'},
-            'a': self.encodeClassname(classname),
-        }
-
-        names = [pspec.name for pspec in obj.props if not pspec.value_type.is_classed()]
-        for name in names:
-            if name == 'guid':
-                retVal['@'] = '<urn:uuid:%s>' % (obj.props.guid)
-            else:
-                fieldname = self.encodeFieldname(classname, name)
-                retVal[fieldname] = obj.get_property(name)
-
-        return retVal
-
-    def encodeClassname(self, classname):
-        if classname in self.rm.classes_to_rdf:
-            return self.rm.classes_to_rdf[classname]
-
-        return 'mgd:' + classname
-
-    def encodeFieldname(self, classname, fieldname):
-        if classname in self.rm.fields_to_rdf:
-            if fieldname in self.rm.fields_to_rdf[classname]:
-                return self.rm.fields_to_rdf[classname][fieldname]
-
-        return 'mgd:' + fieldname
+        q = QueryHandler(self.mgd, self.rm, fields)
+        return q.handle()
 
     def run(self):
         print("\nwaiting for requests...")
