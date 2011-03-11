@@ -81,7 +81,7 @@ class QueryHandler (Handler):
             self.rdf_map = {}
 
         full_name = Handler.canonicalRdfName(self.rdf_map, self.input['a'])
-        self.mgd_type_name = self.decodeRdfClass(self.input['a'])
+        self.mgd_type_name = self.decodeRdfClass(full_name)
 
     def handle(self):
         qstor = Midgard.QueryStorage(dbclass=self.mgd_type_name)
@@ -97,7 +97,8 @@ class QueryHandler (Handler):
         if 'order' in self.input:
             for order in self.input['order']:
                 for key, direction in order.items():
-                    qprop = Midgard.QueryProperty(property = self.decodeRdfProperty(self.mgd_type_name, key))
+                    full_name = Handler.canonicalRdfName(self.rdf_map, key)
+                    qprop = Midgard.QueryProperty(property = self.decodeRdfProperty(self.mgd_type_name, full_name))
                     qprop.validate()
 
                     sel.add_order(qprop, direction)
@@ -124,7 +125,8 @@ class QueryHandler (Handler):
         value = Midgard.QueryValue()
         value.set_value(constraint_dict[2])
 
-        property = Midgard.QueryProperty(property = self.decodeRdfProperty(self.mgd_type_name, constraint_dict[0]))
+        full_name = Handler.canonicalRdfName(self.rdf_map, constraint_dict[0])
+        property = Midgard.QueryProperty(property = self.decodeRdfProperty(self.mgd_type_name, full_name))
         property.validate()
 
         constraint = Midgard.QueryConstraint(property = property,
