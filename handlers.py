@@ -41,7 +41,7 @@ class Handler:
         return 'mgd:' + fieldname
 
     def decodeRdfClass(self, rdfName):
-        if rdfName.startswith(self.MGD_NAMESPACE)
+        if rdfName.startswith(self.MGD_NAMESPACE):
             return rdfName[len(self.MGD_NAMESPACE):]
 
         if rdfName not in self.rm.rdf_to_classes:
@@ -50,7 +50,7 @@ class Handler:
         return self.rm.rdf_to_classes[rdfName]
 
     def decodeRdfProperty(self, mgd_class, rdfName):
-        if rdfName.startswith(self.MGD_NAMESPACE)
+        if rdfName.startswith(self.MGD_NAMESPACE):
             return rdfName[len(self.MGD_NAMESPACE):]
 
         if rdfName not in self.rm.rdf_to_fields[mgd_class]:
@@ -62,7 +62,7 @@ class Handler:
     def canonicalRdfName(map, rdfName):
         """convert short RDF-name to the full form"""
 
-        for short,long in map.item():
+        for short,long in map.items():
             if rdfName.startswith(short + ':'):
                 return rdfName.replace(short + ":", long, 1)
 
@@ -84,7 +84,7 @@ class QueryHandler (Handler):
         self.mgd_type_name = self.decodeRdfClass(self.input['a'])
 
     def handle(self):
-        qstor = Midgard.QueryStorage(dbclass=mgd_type_name)
+        qstor = Midgard.QueryStorage(dbclass=self.mgd_type_name)
         qstor.validate()
 
         sel = Midgard.QuerySelect(connection=self.mgd, storage=qstor)
