@@ -42,7 +42,6 @@ class MidgardDaemon:
         self.stream = ZMQStream(socket, self.loop)
         self.stream.on_recv(self.handler)
         print("... DONE")
-        print("\nwaiting for requests...")
 
 
     def handler(self, message):
@@ -145,6 +144,7 @@ class MidgardDaemon:
         return retVal
 
     def run(self):
+        print("\nwaiting for requests...")
         self.loop.start()
 
 if __name__ == '__main__':
