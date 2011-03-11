@@ -5,8 +5,11 @@ class RdfMapper:
     def __init__(self, mgd):
         self.mgd = mgd
 
-        self.classes = {}
-        self.fields = {}
+        self.classes_to_rdf = {}
+        self.rdf_to_classes = {}
+
+        self.fields_to_rdf = {}
+        self.rdf_to_fields = {}
 
         self.read_types()
 
@@ -23,14 +26,16 @@ class RdfMapper:
         mrp = Midgard.ReflectorProperty(dbclass = gtype.name)
 
         if rdf:
-            self.classes[rdf] = gtype.name
+            self.rdf_to_classes[rdf] = gtype.name
+            self.classes_to_rdf[gtype.name] = rdf
 
         namespaces = {}
         if namespaces_str:
             for short, long in [namespace_str.split(":", 1) for namespace_str in namespaces_str.split(",")]:
                 namespaces[short] = long
 
-        properties = {}
+        rdf_to_fields = {}
+        fields_to_rdf = {}
         for property in gobject.list_properties(gtype):
             rdf_prop = mrp.get_user_value(property.name, 'property')
 
@@ -42,11 +47,12 @@ class RdfMapper:
                     rdf_prop = rdf_prop.replace(k + ":", v, 1)
                     break
 
-            properties[rdf_prop] = property.name
-            #print("    %s = %s" % (property.name, rdf_prop))
+            rdf_to_fields[rdf_prop] = property.name
+            fields_to_rdf[property.name] = rdf_prop
 
-        if len(properties):
-            self.fields[gtype.name] = properties
+        if len(rdf_to_fields):
+            self.rdf_to_fields[gtype.name] = rdf_to_fields
+            self.fields_to_rdf[gtype.name] = fields_to_rdf
 
         for kid in gtype.children:
             self.read_type(kid)
