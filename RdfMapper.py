@@ -9,8 +9,6 @@ class RdfMapper:
         self.fields = {}
 
         self.read_types()
-        print(self.classes)
-        print(self.fields)
 
     def read_types(self):
         for gtype in Midgard.Object.__gtype__.children:
@@ -26,16 +24,11 @@ class RdfMapper:
 
         if rdf:
             self.classes[rdf] = gtype.name
-            #print("%s = %s" % (gtype.name, rdf))
-        else:
-            #print("%s" % (gtype.name))
-            pass
 
         namespaces = {}
         if namespaces_str:
             for short, long in [namespace_str.split(":", 1) for namespace_str in namespaces_str.split(",")]:
                 namespaces[short] = long
-            #print(namespaces)
 
         properties = {}
         for property in gobject.list_properties(gtype):
