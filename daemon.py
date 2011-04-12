@@ -47,7 +47,7 @@ class MidgardDaemon:
 
 
     def handler(self, message):
-        msg = str(message[0], 'utf8')
+        msg = message[0]
 
         try:
             data = json.loads(msg)
@@ -62,7 +62,7 @@ class MidgardDaemon:
             resp_obj = {"status": {"code": e.code, "error": "Invalid request. %s" % (e.message)}}
             response = json.dumps(resp_obj)
 
-        self.stream.send(bytes(response, 'utf8'))
+        self.stream.send(response)
 
     def handleQuery(self, fields):
         handler = QueryHandler(self.mgd, self.rm, fields)
