@@ -60,6 +60,7 @@ class Handler:
         return self.rm.rdf_to_fields[mgd_class][rdfName]
 
     # Static methods
+    @staticmethod
     def canonicalRdfName(map, rdfName):
         """convert short RDF-name to the full form"""
 
@@ -124,7 +125,8 @@ class QueryHandler (Handler):
 
     def decodeConstraint(self, constraint_dict):
         value = Midgard.QueryValue()
-        value.set_value(constraint_dict[2])
+        value.set_value(str(constraint_dict[2]))
+        print(value)
 
         full_name = Handler.canonicalRdfName(self.rdf_map, constraint_dict[0])
         property = Midgard.QueryProperty(property = self.decodeRdfProperty(self.mgd_type_name, full_name))

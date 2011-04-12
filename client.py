@@ -7,7 +7,7 @@ def main(addr):
 
     while True:
         try:
-            msg = bytes(input("enter message> "), 'utf8')
+            msg = raw_input("enter message> ")
             socket.send(msg)
             resp = socket.recv()
             print("\ngot: %s\n" % (resp))
